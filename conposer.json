@@ -1,0 +1,22 @@
+{
+  "name": "presentkim/item-serialize-utils",
+  "description": "Provides utils for (de)serialize more shorter and easier for PocketMine-MP",
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "pocketmine/pocketmine-mp": "^5.0.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "kim\\present\\utils\\itemserialize\\": [
+        "src/kim/present/utils/itemserialize/"
+      ]
+    }
+  },
+  "extra": {
+    "virion": {
+      "spec": "3.0",
+      "namespace-root": "kim\\present\\utils\\itemserialize"
+    }
+  }
+}
