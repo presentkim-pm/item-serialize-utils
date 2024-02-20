@@ -1,0 +1,9 @@
+---
+branches:
+  - main
+projects:
+  item-serialize-utils:
+    path: ""
+    model: virion
+    type: library
+...
