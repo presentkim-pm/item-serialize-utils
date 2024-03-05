@@ -30,9 +30,14 @@ use pocketmine\item\Item;
 use pocketmine\nbt\BigEndianNbtSerializer;
 use pocketmine\nbt\TreeRoot;
 
+use function iconv;
+use function mb_detect_encoding;
+
 final class ItemSerializeUtils{
 	public static function serialize(Item $item) : string{
-		return (new BigEndianNbtSerializer())->write(new TreeRoot($item->nbtSerialize()));
+		$buffer = (new BigEndianNbtSerializer())->write(new TreeRoot($item->nbtSerialize()));
+		$format = mb_detect_encoding($buffer);
+		return $format === "UTF-8" ? $buffer : iconv($format, "UTF-8", $buffer);
 	}
 
 	public static function deserialize(string $contents) : Item{
