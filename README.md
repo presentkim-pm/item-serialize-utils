@@ -24,11 +24,25 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
+
+:heavy_check_mark: Provides classes for serialize item
+- `kim\present\utils\itemserialize\ItemSerializeUtils`
+- `kim\present\utils\itemserialize\SerializeMode`
+
 :heavy_check_mark: Provides util function for serialize item
-- `kim\present\utils\itemserialize\ItemSerializeUtils::serialize(Item $item) : string`
+- `ItemSerializeUtils::serialize(Item $item, SerializeMode $mode = SerializeMode::BINARY) : string`
 
 :heavy_check_mark: Provides util function for deserialize item
-- `kim\present\utils\itemserialize\ItemSerializeUtils::deserialize(string $contents) : Item`
+- `ItemSerializeUtils::deserialize(string $contents, SerializeMode $mode = SerializeMode::BINARY) : Item`
+
+:heavy_check_mark: Provides multiple serialize modes
+- `SerializeMode::BINARY` : Binary string that write by BigEndianNbtSerializer
+- `SerializeMode::BASE64` : Same as BINARY, but encoded in base64_encode()
+- `SerializeMode::HEX` : Same as BINARY, but encoded in bin2hex()
+- `SerializeMode::SNBT ` : [Stringified Named Binary Tag](https://minecraft.fandom.com/wiki/NBT_format#SNBT_format) format string
+- `SerializeMode::JSON` : JSON format string
+
+> **NOTE** : JSON mode is not same as `Item::legacyJsonDeserialize()`
 
 -----
 
