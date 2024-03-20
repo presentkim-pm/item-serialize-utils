@@ -6,4 +6,7 @@ projects:
     path: ""
     model: virion
     type: library
+    libs:
+      - src: presentkim-pm/nbt-serializer/nbt-serializer
+        version: "^1.2.0"
 ...
