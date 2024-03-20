@@ -32,6 +32,8 @@ use pocketmine\data\bedrock\item\SavedItemStackData;
 use pocketmine\item\Item;
 use pocketmine\nbt\tag\CompoundTag;
 
+use function get_class;
+use function json_decode;
 use function json_encode;
 
 final class ItemSerializeUtils{
