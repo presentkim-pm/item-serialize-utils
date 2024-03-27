@@ -31,45 +31,153 @@ use pocketmine\data\bedrock\item\SavedItemData;
 use pocketmine\data\bedrock\item\SavedItemStackData;
 use pocketmine\item\Item;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\Tag;
 
 use function get_class;
 use function json_decode;
 use function json_encode;
 
 final class ItemSerializeUtils{
+
+	/**
+	 * Serialize the item to the contents with the specified mode
+	 *
+	 * @param Item          $item
+	 * @param SerializeMode $mode
+	 *
+	 * @return string
+	 *
+	 * @deprecated Use other serialize methods instead of this method
+	 */
 	public static function serialize(Item $item, SerializeMode $mode = SerializeMode::BINARY) : string{
-		$tag = $item->nbtSerialize();
-		return self::encodeToUTF8(match ($mode) {
-			SerializeMode::BINARY => NbtSerializer::toBinary($tag),
-			SerializeMode::BASE64 => NbtSerializer::toBase64($tag),
-			SerializeMode::HEX    => NbtSerializer::toHex($tag),
-			SerializeMode::SNBT   => NbtSerializer::toSNBT($tag),
-			SerializeMode::JSON   => self::jsonSerialize($tag)
-		});
+		return match ($mode) {
+			SerializeMode::BINARY => self::binarySerialize($item),
+			SerializeMode::BASE64 => self::base64Serialize($item),
+			SerializeMode::HEX    => self::hexSerialize($item),
+			SerializeMode::SNBT   => self::snbtSerialize($item),
+			SerializeMode::JSON   => self::jsonSerialize($item)
+		};
 	}
 
 	/**
+	 * Deserialize the item from the contents with the specified mode
+	 *
 	 * @param string        $contents
 	 * @param SerializeMode $mode
 	 *
 	 * @return Item
+	 *
+	 * @deprecated Use other deserialize methods instead of this method
 	 */
 	public static function deserialize(string $contents, SerializeMode $mode = SerializeMode::BINARY) : Item{
-		$tag = match ($mode) {
-			SerializeMode::BINARY => NbtSerializer::fromBinary($contents),
-			SerializeMode::BASE64 => NbtSerializer::fromBase64($contents),
-			SerializeMode::HEX    => NbtSerializer::fromHex($contents),
-			SerializeMode::SNBT   => NbtSerializer::fromSNBT($contents),
+		return match ($mode) {
+			SerializeMode::BINARY => self::binaryDeserialize($contents),
+			SerializeMode::BASE64 => self::base64Deserialize($contents),
+			SerializeMode::HEX    => self::hexDeserialize($contents),
+			SerializeMode::SNBT   => self::snbtDeserialize($contents),
 			SerializeMode::JSON   => self::jsonDeserialize($contents)
 		};
-		if(!($tag instanceof CompoundTag)){
-			throw new \InvalidArgumentException("Invalid tag type : " . get_class($tag));
-		}
-
-		return Item::nbtDeserialize($tag);
 	}
 
-	private static function jsonSerialize(CompoundTag $tag) : string{
+	/**
+	 * Serialize the item to the binary contents
+	 *
+	 * @param Item $item
+	 *
+	 * @return string
+	 */
+	public static function binarySerialize(Item $item) : string{
+		return self::encodeToUTF8(NbtSerializer::toBinary($item->nbtSerialize()));
+	}
+
+	/**
+	 * Deserialize the item from the binary contents
+	 *
+	 * @param string $contents
+	 *
+	 * @return Item
+	 */
+	public static function binaryDeserialize(string $contents) : Item{
+		return self::deserializeItemTag(NbtSerializer::fromBinary($contents));
+	}
+
+	/**
+	 * Serialize the item to the base64 contents
+	 *
+	 * @param Item $item
+	 *
+	 * @return string
+	 */
+	public static function base64Serialize(Item $item) : string{
+		return self::encodeToUTF8(NbtSerializer::toBase64($item->nbtSerialize()));
+	}
+
+	/**
+	 * Deserialize the item from the base64 contents
+	 *
+	 * @param string $contents
+	 *
+	 * @return Item
+	 */
+	public static function base64Deserialize(string $contents) : Item{
+		return self::deserializeItemTag(NbtSerializer::fromBase64($contents));
+	}
+
+	/**
+	 * Serialize the item to the hex string contents
+	 *
+	 * @param Item $item
+	 *
+	 * @return string
+	 */
+	public static function hexSerialize(Item $item) : string{
+		return self::encodeToUTF8(NbtSerializer::toHex($item->nbtSerialize()));
+	}
+
+
+	/**
+	 * Deserialize the item from the hex string contents
+	 *
+	 * @param string $contents
+	 *
+	 * @return Item
+	 */
+	public static function hexDeserialize(string $contents) : Item{
+		return self::deserializeItemTag(NbtSerializer::fromHex($contents));
+	}
+
+	/**
+	 * Serialize the item to the SNBT contents
+	 *
+	 * @param Item $item
+	 *
+	 * @return string
+	 */
+	public static function snbtSerialize(Item $item) : string{
+		return self::encodeToUTF8(NbtSerializer::toSNBT($item->nbtSerialize()));
+	}
+
+	/**
+	 * Deserialize the item from the SNBT contents
+	 *
+	 * @param string $contents
+	 *
+	 * @return Item
+	 */
+	public static function snbtDeserialize(string $contents) : Item{
+		return self::deserializeItemTag(NbtSerializer::fromSNBT($contents));
+	}
+
+	/**
+	 * Serialize the item to the JSON contents
+	 *  It's not same as {@link Item::legacyJsonDeserialize()}
+	 *
+	 * @param Item $item
+	 *
+	 * @return string
+	 */
+	public static function jsonSerialize(Item $item) : string{
+		$tag = $item->nbtSerialize();
 		$json = [
 			SavedItemStackData::TAG_COUNT => $tag->getByte(SavedItemStackData::TAG_COUNT),
 			SavedItemData::TAG_NAME => $tag->getString(SavedItemData::TAG_NAME),
@@ -85,10 +193,18 @@ final class ItemSerializeUtils{
 		if($namedTag !== null){
 			$json[SavedItemData::TAG_TAG] = NbtSerializer::toSNBT($namedTag);
 		}
-		return json_encode($json);
+		return self::encodeToUTF8(json_encode($json));
 	}
 
-	private static function jsonDeserialize(string $contents) : CompoundTag{
+	/**
+	 * Deserialize the item from the JSON contents
+	 *   It's not same as {@link Item::legacyJsonDeserialize()}
+	 *
+	 * @param string $contents
+	 *
+	 * @return Item
+	 */
+	public static function jsonDeserialize(string $contents) : Item{
 		$json = json_decode($contents, true);
 
 		$tag = new CompoundTag();
@@ -103,11 +219,20 @@ final class ItemSerializeUtils{
 			$tag->setTag(SavedItemData::TAG_TAG, NbtSerializer::fromSNBT($json[SavedItemData::TAG_TAG]));
 		}
 
-		return $tag;
+		return self::deserializeItemTag($tag);
 	}
 
 	/** Convert the contents to UTF-8 encoding */
 	private static function encodeToUTF8(string $contents) : string{
 		return mb_convert_encoding($contents, "UTF-8", mb_detect_encoding($contents));
+	}
+
+
+	/** Deserialize the item from the compound tag */
+	private static function deserializeItemTag(Tag $tag) : Item{
+		if(!($tag instanceof CompoundTag)){
+			throw new \InvalidArgumentException("Invalid tag type : " . get_class($tag));
+		}
+		return Item::nbtDeserialize($tag);
 	}
 }
