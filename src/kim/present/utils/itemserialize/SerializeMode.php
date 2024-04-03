@@ -27,9 +27,9 @@ declare(strict_types=1);
 namespace kim\present\utils\itemserialize;
 
 enum SerializeMode{
-	case BINARY;
-	case BASE64;
-	case HEX;
-	case SNBT;
-	case JSON;
+    case BINARY;
+    case BASE64;
+    case HEX;
+    case SNBT;
+    case JSON;
 }
