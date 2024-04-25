@@ -31,6 +31,7 @@ use pocketmine\data\bedrock\item\SavedItemData;
 use pocketmine\data\bedrock\item\SavedItemStackData;
 use pocketmine\item\Item;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\Tag;
 
 use function get_class;
@@ -166,6 +167,42 @@ final class ItemSerializeUtils{
      */
     public static function snbtDeserialize(string $contents) : Item{
         return self::deserializeItemTag(NbtSerializer::fromSNBT($contents));
+    }
+
+
+    /**
+     * Serialize the item list to the SNBT contents
+     *
+     * @param Item[] $items
+     *
+     * @return string
+     */
+    public static function snbtSerializeList(array $items) : string{
+        $listTag = new ListTag();
+        foreach($items as $item){
+            $listTag->push($item->nbtSerialize());
+        }
+        return self::encodeToUTF8(NbtSerializer::toSNBT($listTag));
+    }
+
+    /**
+     * Deserialize the item list from the SNBT contents
+     *
+     * @param string $contents
+     *
+     * @return Item[]
+     */
+    public static function snbtDeserializeList(string $contents) : array{
+        $listTag = NbtSerializer::fromSNBT($contents);
+        if(!($listTag instanceof ListTag)){
+            throw new \InvalidArgumentException("Invalid tag type : " . get_class($listTag));
+        }
+
+        $items = [];
+        foreach($listTag as $tag){
+            $items[] = self::deserializeItemTag($tag);
+        }
+        return $items;
     }
 
     /**
