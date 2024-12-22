@@ -33,6 +33,7 @@ use pocketmine\item\Item;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\Tag;
+use pocketmine\VersionInfo;
 
 use function get_class;
 use function json_decode;
@@ -88,7 +89,7 @@ final class ItemSerializeUtils{
      * @return string
      */
     public static function binarySerialize(Item $item) : string{
-        return self::encodeToUTF8(NbtSerializer::toBinary($item->nbtSerialize()));
+        return self::encodeToUTF8(NbtSerializer::toBinary(self::serializeItemTag($item)));
     }
 
     /**
@@ -110,7 +111,7 @@ final class ItemSerializeUtils{
      * @return string
      */
     public static function base64Serialize(Item $item) : string{
-        return self::encodeToUTF8(NbtSerializer::toBase64($item->nbtSerialize()));
+        return self::encodeToUTF8(NbtSerializer::toBase64(self::serializeItemTag($item)));
     }
 
     /**
@@ -132,9 +133,8 @@ final class ItemSerializeUtils{
      * @return string
      */
     public static function hexSerialize(Item $item) : string{
-        return self::encodeToUTF8(NbtSerializer::toHex($item->nbtSerialize()));
+        return self::encodeToUTF8(NbtSerializer::toHex(self::serializeItemTag($item)));
     }
-
 
     /**
      * Deserialize the item from the hex string contents
@@ -155,7 +155,7 @@ final class ItemSerializeUtils{
      * @return string
      */
     public static function snbtSerialize(Item $item) : string{
-        return self::encodeToUTF8(NbtSerializer::toSNBT($item->nbtSerialize()));
+        return self::encodeToUTF8(NbtSerializer::toSNBT(self::serializeItemTag($item)));
     }
 
     /**
@@ -169,7 +169,6 @@ final class ItemSerializeUtils{
         return self::deserializeItemTag(NbtSerializer::fromSNBT($contents));
     }
 
-
     /**
      * Serialize the item list to the SNBT contents
      *
@@ -180,7 +179,7 @@ final class ItemSerializeUtils{
     public static function snbtSerializeList(array $items) : string{
         $listTag = new ListTag();
         foreach($items as $item){
-            $listTag->push($item->nbtSerialize());
+            $listTag->push(self::serializeItemTag($item));
         }
         return self::encodeToUTF8(NbtSerializer::toSNBT($listTag));
     }
@@ -214,7 +213,7 @@ final class ItemSerializeUtils{
      * @return string
      */
     public static function jsonSerialize(Item $item) : string{
-        $tag = $item->nbtSerialize();
+        $tag = self::serializeItemTag($item);
         $json = [
             SavedItemStackData::TAG_COUNT => $tag->getByte(SavedItemStackData::TAG_COUNT),
             SavedItemData::TAG_NAME => $tag->getString(SavedItemData::TAG_NAME),
@@ -264,6 +263,12 @@ final class ItemSerializeUtils{
         return mb_convert_encoding($contents, "UTF-8", mb_detect_encoding($contents));
     }
 
+    /** Deserialize the item from the compound tag */
+    private static function serializeItemTag(Item $item) : CompoundTag{
+        $tag = $item->nbtSerialize();
+        $tag->removeTag(VersionInfo::TAG_WORLD_DATA_VERSION);
+        return $tag;
+    }
 
     /** Deserialize the item from the compound tag */
     private static function deserializeItemTag(Tag $tag) : Item{
@@ -272,4 +277,5 @@ final class ItemSerializeUtils{
         }
         return Item::nbtDeserialize($tag);
     }
+
 }
