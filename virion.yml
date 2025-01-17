@@ -1,7 +1,7 @@
 ---
 name: item-serialize-utils
 antigen: kim\present\utils\itemserialize
-version: 2.0.0
+version: 3.0.0
 api: [ 5.0.0 ]
 author: PresentKim
 description: "Provides utils for (de)serialize more shorter and easier!"
