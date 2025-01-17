@@ -26,10 +26,18 @@ declare(strict_types=1);
 
 namespace kim\present\utils\itemserialize;
 
-enum SerializeMode{
-    case BINARY;
-    case BASE64;
-    case HEX;
-    case SNBT;
-    case JSON;
+use kim\present\serializer\nbt\NbtSerializer;
+use pocketmine\nbt\tag\Tag;
+
+final class HexItemSerializer implements ItemSerializer{
+    use ItemSerializerTrait;
+
+    protected static function serializeTag(Tag $tag) : string{
+        return self::encodeToUTF8(NbtSerializer::toHex($tag));
+    }
+
+    protected static function deserializeTag(string $contents) : Tag{
+        return NbtSerializer::fromHex($contents);
+    }
+
 }
