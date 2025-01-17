@@ -8,5 +8,5 @@ projects:
     type: library
     libs:
       - src: presentkim-pm/nbt-serializer/nbt-serializer
-        version: "^2.0.0"
+        version: "^2.1.0"
 ...
