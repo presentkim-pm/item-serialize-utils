@@ -33,7 +33,7 @@ final class Base64ItemSerializer implements ItemSerializer{
     use ItemSerializerTrait;
 
     protected static function serializeTag(Tag $tag) : string{
-        return self::encodeToUTF8(NbtSerializer::toBase64($tag));
+        return NbtSerializer::toBase64($tag);
     }
 
     protected static function deserializeTag(string $contents) : Tag{

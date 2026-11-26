@@ -1,22 +1,37 @@
 {
   "name": "presentkim/item-serialize-utils",
-  "description": "Provides utils for (de)serialize more shorter and easier for PocketMine-MP",
+  "description": "Provides utils for (de)serialize items more shorter and easier for axolotl-pm/PocketMine-MP",
   "type": "library",
   "license": "MIT",
   "require": {
-    "pocketmine/pocketmine-mp": "^5.0.0"
+    "php": "^8.4",
+    "pocketmine/pocketmine-mp": "^5.0",
+    "presentkim/nbt-serializer": "dev-main"
   },
+  "require-dev": {
+    "axolotl-pm/pocketmine-mp": "^5.51",
+    "phpunit/phpunit": "^12.0"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/presentkim-pm/nbt-serializer"
+    }
+  ],
   "autoload": {
     "psr-4": {
-      "kim\\present\\utils\\itemserialize\\": [
-        "src/kim/present/utils/itemserialize/"
-      ]
+      "kim\\present\\utils\\itemserialize\\": "src/kim/present/utils/itemserialize/"
     }
   },
-  "extra": {
-    "virion": {
-      "spec": "3.0",
-      "namespace-root": "kim\\present\\utils\\itemserialize"
+  "autoload-dev": {
+    "psr-4": {
+      "kim\\present\\utils\\itemserialize\\tests\\": "tests/"
     }
+  },
+  "scripts": {
+    "test": "phpunit"
+  },
+  "config": {
+    "sort-packages": true
   }
 }

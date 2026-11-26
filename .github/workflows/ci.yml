@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.4", "8.5"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          ini-values: error_reporting=-1, zend.assertions=1
+
+      # The server's native extensions (chunkutils2, encoding, morton, ...) are not available on setup-php.
+      # Tests only need the item code path; tests/polyfill stands in for the few functions it touches.
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --ignore-platform-req='ext-*'
+
+      - name: Run tests
+        run: composer test

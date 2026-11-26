@@ -22,36 +22,68 @@
  * @noinspection PhpUnused
  */
 
+
 declare(strict_types=1);
 
 namespace kim\present\utils\itemserialize;
 
+use pocketmine\data\SavedDataLoadingException;
 use pocketmine\item\Item;
 
+/**
+ * Serializes items to strings and back.
+ *
+ * Every serialize method produces deterministic output: the same item always becomes the same string,
+ * regardless of the order its NBT keys were stored in, so the result can be compared, hashed or used as a key.
+ *
+ * Every deserialize method throws {@link SavedDataLoadingException} for any malformed or incompatible input.
+ */
 interface ItemSerializer{
 
     /** Serialize the item to the contents */
     public static function serialize(Item $item) : string;
 
     /**
-     * Serialize the item list to the contents
+     * Serialize the item list to the contents. Keys are discarded, use {@link serializeContents()} to keep them.
      *
-     * @param Item[] $items
-     *
-     * @return string
+     * @param iterable<Item> $items
      */
     public static function serializeList(iterable $items) : string;
 
-    /** Deserialize the item from the contents */
+    /**
+     * Serialize slot-indexed items (e.g. {@link \pocketmine\inventory\Inventory::getContents()}) to the contents.
+     * Slot indices are preserved, empty (air) slots are skipped.
+     *
+     * @param array<int, Item> $contents slot index => item
+     *
+     * @throws \InvalidArgumentException if a slot index is negative
+     */
+    public static function serializeContents(array $contents) : string;
+
+    /**
+     * Deserialize the item from the contents
+     *
+     * @throws SavedDataLoadingException
+     */
     public static function deserialize(string $contents) : Item;
 
     /**
      * Deserialize the item list from the contents
      *
-     * @param string $contents
+     * @return list<Item>
      *
-     * @return Item[]
+     * @throws SavedDataLoadingException
      */
     public static function deserializeList(string $contents) : array;
+
+    /**
+     * Deserialize slot-indexed items from the contents produced by {@link serializeContents()}.
+     * The result can be passed directly to {@link \pocketmine\inventory\Inventory::setContents()}.
+     *
+     * @return array<int, Item> slot index => item, sorted by slot index
+     *
+     * @throws SavedDataLoadingException
+     */
+    public static function deserializeContents(string $contents) : array;
 
 }

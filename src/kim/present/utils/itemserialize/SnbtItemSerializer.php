@@ -33,7 +33,7 @@ final class SnbtItemSerializer implements ItemSerializer{
     use ItemSerializerTrait;
 
     protected static function serializeTag(Tag $tag) : string{
-        return self::encodeToUTF8(NbtSerializer::toSnbt($tag));
+        return NbtSerializer::toSnbt($tag);
     }
 
     protected static function deserializeTag(string $contents) : Tag{

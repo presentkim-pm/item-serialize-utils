@@ -33,7 +33,7 @@ final class BinaryItemSerializer implements ItemSerializer{
     use ItemSerializerTrait;
 
     protected static function serializeTag(Tag $tag) : string{
-        return self::encodeToUTF8(NbtSerializer::toBinary($tag));
+        return NbtSerializer::toBinary($tag);
     }
 
     protected static function deserializeTag(string $contents) : Tag{
