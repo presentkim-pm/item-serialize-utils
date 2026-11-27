@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace kim\present\utils\itemserialize;
 
+use kim\present\serializer\nbt\NbtSerializer;
 use pocketmine\data\bedrock\item\SavedItemData;
 use pocketmine\data\bedrock\item\SavedItemStackData;
 use pocketmine\data\SavedDataLoadingException;
@@ -39,11 +40,13 @@ use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\Tag;
 use pocketmine\VersionInfo;
 
-use function array_keys;
+use function array_key_first;
+use function count;
 use function get_debug_type;
+use function hash;
 use function is_int;
 use function ksort;
-use function sort;
+use function strcmp;
 
 use const SORT_STRING;
 
@@ -56,6 +59,15 @@ use const SORT_STRING;
  *   for contents each compound also has an {@link IntTag} {@link SavedItemStackData::TAG_SLOT}
  */
 trait ItemSerializerTrait{
+
+    /**
+     * Deserialized items by cache key, least recently used first. Static properties of a trait are per using class,
+     * so every format has its own cache.
+     *
+     * @var array<string, Item>
+     */
+    private static array $itemCache = [];
+    private static int $itemCacheCapacity = 0;
 
     /** Serialize the nbt tag to the contents */
     abstract protected static function serializeTag(Tag $tag) : string;
@@ -97,14 +109,19 @@ trait ItemSerializerTrait{
     }
 
     public static function deserialize(string $contents) : Item{
-        return static::deserializeItemTag(self::decodeTag($contents));
+        if(self::$itemCacheCapacity === 0){
+            return static::deserializeItemTag(self::decodeTag($contents));
+        }
+        $key = "c" . hash("xxh128", $contents, true);
+        return self::getCachedItem($key)
+            ?? self::cacheItem($key, static::deserializeItemTag(self::decodeTag($contents)));
     }
 
     /** @return list<Item> */
     public static function deserializeList(string $contents) : array{
         $items = [];
         foreach(self::decodeListTag($contents) as $tag){
-            $items[] = static::deserializeItemTag($tag);
+            $items[] = self::deserializeCachedItemTag($tag);
         }
         return $items;
     }
@@ -124,12 +141,31 @@ trait ItemSerializerTrait{
             if(isset($items[$slot])){
                 throw new SavedDataLoadingException("Duplicate slot index $slot");
             }
-            $tag = clone $tag;
+            // the decoded tree is owned by this call, so it can be modified without a copy
             $tag->removeTag(SavedItemStackData::TAG_SLOT);
-            $items[$slot] = static::deserializeItemTag($tag);
+            $items[$slot] = self::deserializeCachedItemTag($tag);
         }
         ksort($items);
         return $items;
+    }
+
+    public static function enableCache(int $capacity = 1024) : void{
+        if($capacity < 1){
+            throw new \InvalidArgumentException("Cache capacity must be at least 1, got $capacity");
+        }
+        self::$itemCacheCapacity = $capacity;
+        while(count(self::$itemCache) > $capacity){
+            unset(self::$itemCache[array_key_first(self::$itemCache)]);
+        }
+    }
+
+    public static function disableCache() : void{
+        self::$itemCacheCapacity = 0;
+        self::$itemCache = [];
+    }
+
+    public static function clearCache() : void{
+        self::$itemCache = [];
     }
 
     /**
@@ -164,26 +200,86 @@ trait ItemSerializerTrait{
     }
 
     /**
-     * Returns a copy of the tag with every compound's keys sorted (byte order). List order is preserved.
+     * Returns the tag with every compound's keys sorted (byte order) at every depth. List order is preserved.
+     *
+     * Subtrees that are already canonical are returned as they are instead of being copied, so the result can share
+     * tags with the input (including the item's own NBT): it must be treated as read-only, except for a top-level
+     * compound that was not canonical (it is then a new tag).
      */
     protected static function canonicalizeTag(Tag $tag) : Tag{
         if($tag instanceof CompoundTag){
-            $names = array_keys($tag->getValue());
-            sort($names, SORT_STRING);
+            $values = $tag->getValue();
+            $sorted = true;
+            $changed = false;
+            $previous = null;
+            foreach($values as $name => $value){
+                $name = (string) $name;
+                if($previous !== null && strcmp($previous, $name) > 0){
+                    $sorted = false;
+                }
+                $previous = $name;
+                $canonical = self::canonicalizeTag($value);
+                if($canonical !== $value){
+                    $values[$name] = $canonical;
+                    $changed = true;
+                }
+            }
+            if($sorted && !$changed){
+                return $tag;
+            }
+            if(!$sorted){
+                ksort($values, SORT_STRING);
+            }
             $result = new CompoundTag();
-            foreach($names as $name){
-                $result->setTag((string) $name, self::canonicalizeTag($tag->getTag((string) $name)));
+            foreach($values as $name => $value){
+                $result->setTag((string) $name, $value);
             }
             return $result;
         }
         if($tag instanceof ListTag){
-            $values = [];
-            foreach($tag as $value){
-                $values[] = self::canonicalizeTag($value);
+            $type = $tag->getTagType();
+            if($type !== NBT::TAG_Compound && $type !== NBT::TAG_List){
+                return $tag; // scalar elements have nothing to sort
             }
-            return new ListTag($values, $tag->getTagType());
+            $values = [];
+            $changed = false;
+            foreach($tag as $value){
+                $canonical = self::canonicalizeTag($value);
+                $changed = $changed || $canonical !== $value;
+                $values[] = $canonical;
+            }
+            return $changed ? new ListTag($values, $type) : $tag;
         }
         return $tag;
+    }
+
+    /** @throws SavedDataLoadingException */
+    private static function deserializeCachedItemTag(Tag $tag) : Item{
+        if(self::$itemCacheCapacity === 0){
+            return static::deserializeItemTag($tag);
+        }
+        $key = "t" . NbtSerializer::hash($tag);
+        return self::getCachedItem($key) ?? self::cacheItem($key, static::deserializeItemTag($tag));
+    }
+
+    /** Returns a copy of the cached item and marks it as most recently used */
+    private static function getCachedItem(string $key) : ?Item{
+        $item = self::$itemCache[$key] ?? null;
+        if($item === null){
+            return null;
+        }
+        unset(self::$itemCache[$key]);
+        self::$itemCache[$key] = $item;
+        return clone $item;
+    }
+
+    /** Stores a copy of the item, so later changes to the returned item do not leak into the cache */
+    private static function cacheItem(string $key, Item $item) : Item{
+        self::$itemCache[$key] = clone $item;
+        if(count(self::$itemCache) > self::$itemCacheCapacity){
+            unset(self::$itemCache[array_key_first(self::$itemCache)]);
+        }
+        return $item;
     }
 
     /** @throws SavedDataLoadingException */

@@ -86,4 +86,22 @@ interface ItemSerializer{
      */
     public static function deserializeContents(string $contents) : array;
 
+    /**
+     * Enable the deserialization cache of this format (off by default).
+     *
+     * Deserialized items are kept (least recently used evicted beyond $capacity) and copies are returned when the
+     * same contents are deserialized again, skipping the item data upgrade and item construction.
+     * {@link deserialize()} is keyed by the contents string, list and contents entries by the hash of each item tag.
+     * Every call returns a new copy, so the returned items can be modified freely.
+     *
+     * @throws \InvalidArgumentException if the capacity is less than 1
+     */
+    public static function enableCache(int $capacity = 1024) : void;
+
+    /** Disable and clear the deserialization cache of this format */
+    public static function disableCache() : void;
+
+    /** Clear the deserialization cache of this format (e.g. after registering custom items) */
+    public static function clearCache() : void;
+
 }

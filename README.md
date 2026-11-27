@@ -52,6 +52,8 @@ built on [presentkim/nbt-serializer][nbt-serializer-url].
 :heavy_check_mark: Deterministic output: the same item always becomes the same string, whatever order its NBT keys were
 stored in, so results can be compared, hashed or used as keys
 
+:heavy_check_mark: Optional deserialization cache for contents that are loaded again and again
+
 :heavy_check_mark: One exception type for bad input: every `deserialize*()` throws
 `pocketmine\data\SavedDataLoadingException`
 
@@ -124,6 +126,25 @@ try{
 | `deserializeList(string $contents) : list<Item>`          | Deserialize items in order                                          |
 | `serializeContents(array<int, Item> $contents) : string`  | Serialize slot => item (e.g. `Inventory::getContents()`), air skipped; negative slots throw `InvalidArgumentException` |
 | `deserializeContents(string $contents) : array<int, Item>`| Deserialize slot => item, sorted by slot, ready for `Inventory::setContents()` |
+| `enableCache(int $capacity = 1024) : void`                | Turn on the deserialization cache of this format (off by default)   |
+| `disableCache() : void` / `clearCache() : void`           | Turn off and clear / only clear the cache                           |
+
+### Deserialization cache
+
+Most of the cost of loading an item is the server's item data upgrade and item construction, not the NBT decoding.
+When the same contents are loaded repeatedly (shop or menu GUIs, kits, rewards), turn on the cache:
+
+```php
+Base64ItemSerializer::enableCache(); // keeps up to 1024 items, least recently used evicted
+```
+
+- Each format class has its own cache. `deserialize()` is keyed by the contents string; entries of
+  `deserializeList()`/`deserializeContents()` by the hash of each item tag.
+- Every call returns a new copy (`clone`), so returned items can be modified freely.
+- Invalid input is never cached. Call `clearCache()` if item registrations change at runtime.
+
+Measured on the test items (PHP 8.3, no JIT), a cache hit costs about 0.5 µs for a plain item and 3 µs for an
+enchanted, named sword, against 10-30 µs without the cache. A 36-slot inventory loads about twice as fast.
 
 ### Output details
 
