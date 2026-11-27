@@ -1,6 +1,7 @@
 <!-- PROJECT BADGES -->
 <div align="center">
 
+[![Packagist][packagist-badge]][packagist-url]
 [![CI][ci-badge]][ci-url]
 [![Stars][stars-badge]][stars-url]
 [![License][license-badge]][license-url]
@@ -63,21 +64,11 @@ stored in, so results can be compared, hashed or used as keys
 
 ## Installation
 
-The package is installed with Composer. It is not on Packagist yet, and neither is
-[presentkim/nbt-serializer][nbt-serializer-url] (`^3.0`), so add both repositories to your project's `composer.json`
-(Composer does not read `repositories` from dependencies):
-
-```json
-{
-  "repositories": [
-    { "type": "vcs", "url": "https://github.com/presentkim-pm/item-serialize-utils" },
-    { "type": "vcs", "url": "https://github.com/presentkim-pm/nbt-serializer" }
-  ],
-  "require": {
-    "presentkim/item-serialize-utils": "^4.0"
-  }
-}
+```sh
+composer require presentkim/item-serialize-utils
 ```
+
+[presentkim/nbt-serializer][nbt-serializer-url] (`^3.0`) is installed with it.
 
 The server itself is required as `pocketmine/pocketmine-mp: ^5.0`, which `axolotl-pm/pocketmine-mp` satisfies
 through `replace`.
@@ -189,6 +180,10 @@ The tests run against the real `axolotl-pm/pocketmine-mp` item code. Its native 
 
 Distributed under the **MIT**. See [LICENSE][license-url] for more information
 
+
+[packagist-badge]: https://img.shields.io/packagist/v/presentkim/item-serialize-utils.svg?style=for-the-badge
+
+[packagist-url]: https://packagist.org/packages/presentkim/item-serialize-utils
 
 [ci-badge]: https://img.shields.io/github/actions/workflow/status/presentkim-pm/item-serialize-utils/ci.yml?branch=main&style=for-the-badge
 
