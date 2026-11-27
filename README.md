@@ -32,6 +32,8 @@ built on [presentkim/nbt-serializer][nbt-serializer-url].
 - **Target server** : [axolotl-pm/PocketMine-MP][axolotl-url] (PocketMine-MP 5 fork)
 - **PHP** : 8.4 or later
 
+> See [CHANGELOG.md](CHANGELOG.md) for the changes from 3.x.
+>
 > Looking for the Poggit virion for upstream PocketMine-MP 5.44 and older?
 > Use the [`legacy/pmmp-5.44`][legacy-url] branch. It is no longer maintained.
 
@@ -72,7 +74,7 @@ The package is installed with Composer. It is not on Packagist yet, and neither 
     { "type": "vcs", "url": "https://github.com/presentkim-pm/nbt-serializer" }
   ],
   "require": {
-    "presentkim/item-serialize-utils": "dev-main"
+    "presentkim/item-serialize-utils": "^4.0"
   }
 }
 ```
