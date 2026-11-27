@@ -6,7 +6,7 @@
   "require": {
     "php": "^8.4",
     "pocketmine/pocketmine-mp": "^5.0",
-    "presentkim/nbt-serializer": "dev-main"
+    "presentkim/nbt-serializer": "^3.0"
   },
   "require-dev": {
     "axolotl-pm/pocketmine-mp": "^5.51",

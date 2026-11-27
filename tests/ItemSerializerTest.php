@@ -218,6 +218,16 @@ final class ItemSerializerTest extends TestCase{
         self::assertSame(2, $item->getCount());
         self::assertSame("Old", $item->getCustomName());
 
+        // nbt-serializer 2.x wrote strings with json_encode() escapes (\uXXXX, \/)
+        $item = SnbtItemSerializer::deserialize(
+            '{Count:1b,Name:"minecraft:apple",Damage:0s,tag:{display:{Name:"\\u00a7a\\ud55c\\uae00 a\\/b"}}}'
+        );
+        self::assertSame("§a한글 a/b", $item->getCustomName());
+        $item = JsonItemSerializer::deserialize(
+            '{"Count":1,"Name":"minecraft:apple","Damage":0,"tag":"{display:{Name:\\"\\\\ud55c\\\\uae00\\"}}"}'
+        );
+        self::assertSame("한글", $item->getCustomName());
+
         // 3.x wrote empty lists with TAG_End element type
         self::assertSame([], SnbtItemSerializer::deserializeList('[]'));
     }

@@ -61,8 +61,8 @@ stored in, so results can be compared, hashed or used as keys
 
 ## Installation
 
-The package is installed with Composer. `presentkim/nbt-serializer` is not on Packagist,
-so add both repositories to your project's `composer.json`
+The package is installed with Composer. It is not on Packagist yet, and neither is
+[presentkim/nbt-serializer][nbt-serializer-url] (`^3.0`), so add both repositories to your project's `composer.json`
 (Composer does not read `repositories` from dependencies):
 
 ```json
@@ -72,15 +72,10 @@ so add both repositories to your project's `composer.json`
     { "type": "vcs", "url": "https://github.com/presentkim-pm/nbt-serializer" }
   ],
   "require": {
-    "presentkim/item-serialize-utils": "dev-main",
-    "presentkim/nbt-serializer": "dev-main"
+    "presentkim/item-serialize-utils": "dev-main"
   }
 }
 ```
-
-`presentkim/nbt-serializer` is listed in your own `require` because Composer only accepts a `dev-main` dependency
-of a dependency when the root project allows it (alternatively set `"minimum-stability": "dev"`
-with `"prefer-stable": true`).
 
 The server itself is required as `pocketmine/pocketmine-mp: ^5.0`, which `axolotl-pm/pocketmine-mp` satisfies
 through `replace`.

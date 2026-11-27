@@ -27,11 +27,7 @@ declare(strict_types=1);
 namespace kim\present\utils\itemserialize;
 
 use kim\present\serializer\nbt\NbtSerializer;
-use pocketmine\data\SavedDataLoadingException;
 use pocketmine\nbt\tag\Tag;
-
-use function ctype_xdigit;
-use function strlen;
 
 final class HexItemSerializer implements ItemSerializer{
     use ItemSerializerTrait;
@@ -41,10 +37,6 @@ final class HexItemSerializer implements ItemSerializer{
     }
 
     protected static function deserializeTag(string $contents) : Tag{
-        // hex2bin() emits a warning (an ErrorException on PocketMine-MP) before returning false, so validate first
-        if(strlen($contents) % 2 !== 0 || ($contents !== "" && !ctype_xdigit($contents))){
-            throw new SavedDataLoadingException("Invalid hex string");
-        }
         return NbtSerializer::fromHex($contents);
     }
 
